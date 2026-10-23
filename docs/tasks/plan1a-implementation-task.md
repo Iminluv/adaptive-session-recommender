@@ -1,6 +1,6 @@
 # Plan1A Implementation Task
 
-Status: Ready for review; implementation has not started.
+Status: G1 contracts and fixture implemented; implementation is in progress.
 
 Branch: `plan1a-implementation`
 
@@ -61,7 +61,7 @@ No pipeline code should be started until G0 is understood.
 3. Add a tiny fixture containing valid, invalid, duplicate, late, and anonymous-user events.
 4. Add unit tests and a fixture manifest.
 
-Exit condition: the fixture validates reproducibly and the unit tests pass.
+Exit condition: the fixture validates reproducibly and the unit tests pass. Current result: 6 unit tests pass; the sample contains 4 valid records, 1 invalid record, and 1 duplicate ID.
 
 ### G2 — Batch and serving baseline
 

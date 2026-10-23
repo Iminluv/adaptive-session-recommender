@@ -1,6 +1,6 @@
 # Plan 1A Implementation Plan
 
-**Status:** Decisions recorded; implementation not started
+**Status:** G1 contracts and fixture implemented; implementation in progress
 **Scope:** Full Lambda vertical slice on tiny data, then controlled expansion
 **Branch:** `main`
 **Implementation started:** No
@@ -17,7 +17,9 @@ Do not start implementation until these items are resolved:
 4. **Dataset access:** record where October and November files will live. Do not download the full dataset before profiling storage needs.
 5. **Deployment decision:** select and verify the cloud/Kubernetes target before local pipeline implementation. Docker Compose remains available for local debugging, but it is not the first deployment milestone.
 
-The first implementation commit should be a scaffold and fixture only. It must not include a full-data run, a frontend, or unmeasured performance claims.
+The first implementation commit is a scaffold and fixture only. It must not include a full-data run, a frontend, or unmeasured performance claims.
+
+Current G1 evidence: `make test-unit` passes 6 tests; `make sample-fixture` reports 4 valid records, 1 invalid record, and 1 duplicate event ID.
 
 ## 1. Target outcome
 

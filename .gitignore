@@ -1,1 +1,12 @@
-/.gstack
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+data/raw/
+data/generated/
+evidence/logs/
+evidence/metrics/
+evidence/screenshots/
+.DS_Store
+.gstack/
