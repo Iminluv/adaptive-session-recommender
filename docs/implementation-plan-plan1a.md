@@ -1,6 +1,6 @@
 # Plan 1A Implementation Plan
 
-**Status:** DRAFT FOR REVIEW
+**Status:** Decisions recorded; implementation not started
 **Scope:** Full Lambda vertical slice on tiny data, then controlled expansion
 **Branch:** `main`
 **Implementation started:** No
@@ -11,11 +11,11 @@ This document turns the approved plan1a direction into an execution sequence. It
 
 Do not start implementation until these items are resolved:
 
-1. **Worktree integrity:** the tracked `Documentation/` directory is currently deleted in the worktree. Restore it from Git or explicitly confirm that deletion is intentional. The implementation plan must not silently replace the team's existing documentation.
+1. **Worktree integrity:** the tracked `Documentation/` directory deletion is intentional. The active project documentation is under `docs/`; do not restore the old directory or silently recreate it.
 2. **Runtime baseline:** record Python, Java, Spark, Docker, Docker Compose, and Node versions in `docs/environment.md`.
 3. **Hardware baseline:** record RAM, CPU, disk, Docker architecture, and whether kind/Minikube can run.
 4. **Dataset access:** record where October and November files will live. Do not download the full dataset before profiling storage needs.
-5. **Deployment decision:** default to Docker Compose locally and kind/Minikube for the final smoke deployment. Change only if the instructor or hardware makes that impossible.
+5. **Deployment decision:** select and verify the cloud/Kubernetes target before local pipeline implementation. Docker Compose remains available for local debugging, but it is not the first deployment milestone.
 
 The first implementation commit should be a scaffold and fixture only. It must not include a full-data run, a frontend, or unmeasured performance claims.
 
