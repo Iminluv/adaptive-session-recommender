@@ -1,6 +1,8 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra
+RATE ?= 10
+
+.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra replay-sample
 
 install:
 	python3 -m venv .venv
@@ -18,6 +20,9 @@ down:
 
 seed-cassandra:
 	PYTHONPATH=src:. $(PYTHON) scripts/seed_cassandra.py
+
+replay-sample:
+	PYTHONPATH=src:. $(PYTHON) -m adaptive_recommender.streaming.replay_producer --input data/sample/events.jsonl --rate $(RATE)
 
 test-unit:
 	PYTHONPATH=src:. $(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
