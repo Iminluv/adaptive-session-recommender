@@ -2,7 +2,7 @@ PYTHON ?= .venv/bin/python
 
 RATE ?= 10
 
-.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra replay-sample
+.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra replay-sample stream-sample
 
 install:
 	python3 -m venv .venv
@@ -23,6 +23,9 @@ seed-cassandra:
 
 replay-sample:
 	PYTHONPATH=src:. $(PYTHON) -m adaptive_recommender.streaming.replay_producer --input data/sample/events.jsonl --rate $(RATE)
+
+stream-sample:
+	JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PYTHONPATH=src:. $(PYTHON) -m adaptive_recommender.streaming.stream_events
 
 test-unit:
 	PYTHONPATH=src:. $(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
