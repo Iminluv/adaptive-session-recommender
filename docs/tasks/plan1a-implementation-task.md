@@ -83,7 +83,7 @@ Exit condition: one command produces candidates and the API returns recommendati
 5. Persist session intent and recent activity in Cassandra.
 6. Re-rank batch candidates using session intent and fallback signals.
 
-Exit condition: a simulated event changes the API response and the replay can be safely repeated.
+Exit condition: a simulated event changes the API response and the replay can be safely repeated. Current result: Verified via `make e2e-sample`; live clickstream events in Kafka update Cassandra session intent, elevating Product #1002 to Rank 1 over ALS baseline (`reason="adaptive_session_intent"`), and routing corrupted events to `ecommerce.dlq`.
 
 ### G4 — Demonstration, recovery, and deployment evidence
 
@@ -94,7 +94,7 @@ Exit condition: a simulated event changes the API response and the replay can be
 5. Run a small fixed-workload benchmark.
 6. Add kind/Minikube smoke manifests if accepted for the course requirement.
 
-Exit condition: another team member can reproduce the demo from the documentation.
+Exit condition: another team member can reproduce the demo from the documentation. Current result: Minimal React/Vite UI (`web/`) built and verified (`make ui-build`), Compose health checks and `make e2e-sample` automated, evidence saved in `evidence/commands/e2e-sample.txt`.
 
 ## Suggested team workflow
 
@@ -135,14 +135,14 @@ For a student project, the practical alternative is for the team to work directl
 
 ## Acceptance checklist
 
-- [ ] `main` remains unchanged until reviewed work is merged.
-- [ ] The `Documentation/` deletion is explained and resolved.
-- [ ] A new environment can run the fixture workflow.
-- [ ] Batch recommendations are reproducible.
-- [ ] Duplicate and invalid events are handled deterministically.
-- [ ] Late events do not corrupt session state.
-- [ ] API fallbacks work for known, new, and anonymous users.
-- [ ] A live event visibly changes the recommendation response.
+- [x] `main` remains unchanged until reviewed work is merged.
+- [x] The `Documentation/` deletion is explained and resolved.
+- [x] A new environment can run the fixture workflow.
+- [x] Batch recommendations are reproducible.
+- [x] Duplicate and invalid events are handled deterministically.
+- [x] Late events do not corrupt session state.
+- [x] API fallbacks work for known, new, and anonymous users.
+- [x] A live event visibly changes the recommendation response.
 - [ ] Restart/recovery behavior is demonstrated.
 - [ ] All performance numbers include workload, machine, configuration, and units.
 - [ ] Deployment evidence matches the instructor’s accepted requirement.

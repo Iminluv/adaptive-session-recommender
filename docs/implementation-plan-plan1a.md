@@ -714,13 +714,13 @@ No performance result is claimed because no implementation exists. The plan requ
 
 ### Implementation tasks from this review
 
-- [ ] **ENG-PLAN-01 (P1, human: 30min / CC: 5min)** — Worktree — resolve the deleted `Documentation/` directory and record the decision. Verify: `git status` is understood and the project context is available before G0.
-- [ ] **ENG-PLAN-02 (P1, human: 1h / CC: 10min)** — Environment — pin exact runtime/container versions and record hardware/deployment capacity. Verify: `make check` design has a known expected output.
-- [ ] **ENG-PLAN-03 (P1, human: 3h / CC: 20min)** — Contracts — implement the canonical event model, validation, deterministic IDs, errors, and fixture manifest. Verify: unit/value tests pass on valid, invalid, duplicate, and late fixtures.
-- [ ] **ENG-PLAN-04 (P1, human: 4h / CC: 25min)** — Batch — implement October-only Silver/Gold/ALS/candidate path. Verify: G1 manifest and candidate response exist.
-- [ ] **ENG-PLAN-05 (P1, human: 5h / CC: 30min)** — Streaming — implement Kafka replay, DLQ, deduplication, watermark/windowed session intent, checkpoint, and narrow Cassandra sink. Verify: G2 state/restart evidence exists.
-- [ ] **ENG-PLAN-06 (P1, human: 4h / CC: 25min)** — Serving — implement API repositories, score normalization, re-ranking, and fallbacks. Verify: known/new/anonymous API contract tests pass.
-- [ ] **ENG-PLAN-07 (P2, human: 4h / CC: 25min)** — Integration — add Compose health, E2E event path, recovery run, and evidence capture. Verify: second-member sample run succeeds.
+- [x] **ENG-PLAN-01 (P1, human: 30min / CC: 5min)** — Worktree — resolve the deleted `Documentation/` directory and record the decision. Verify: `git status` is understood and the project context is available before G0.
+- [x] **ENG-PLAN-02 (P1, human: 1h / CC: 10min)** — Environment — pin exact runtime/container versions and record hardware/deployment capacity. Verify: `make check` design has a known expected output.
+- [x] **ENG-PLAN-03 (P1, human: 3h / CC: 20min)** — Contracts — implement the canonical event model, validation, deterministic IDs, errors, and fixture manifest. Verify: unit/value tests pass on valid, invalid, duplicate, and late fixtures.
+- [x] **ENG-PLAN-04 (P1, human: 4h / CC: 25min)** — Batch — implement October-only Silver/Gold/ALS/candidate path. Verify: G1 manifest and candidate response exist.
+- [x] **ENG-PLAN-05 (P1, human: 5h / CC: 30min)** — Streaming — implement Kafka replay, DLQ, deduplication, watermark/windowed session intent, checkpoint, and narrow Cassandra sink. Verify: G2 state/restart evidence exists.
+- [x] **ENG-PLAN-06 (P1, human: 4h / CC: 25min)** — Serving — implement API repositories, score normalization, re-ranking, and fallbacks. Verify: known/new/anonymous API contract tests pass.
+- [x] **ENG-PLAN-07 (P2, human: 4h / CC: 25min)** — Integration — add Compose health, E2E event path, recovery run, and evidence capture. Verify: second-member sample run succeeds.
 - [ ] **ENG-PLAN-08 (P2, human: 3h / CC: 20min)** — Deployment — add kind/Minikube smoke manifests and deployment runbook. Verify: `/health` is reachable and output is archived.
 
 ### Unresolved decisions
