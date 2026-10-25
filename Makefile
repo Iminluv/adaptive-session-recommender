@@ -1,4 +1,4 @@
-.PHONY: check test-unit sample-fixture
+.PHONY: check test-unit sample-fixture batch-sample
 
 check:
 	python3 --version
@@ -9,4 +9,7 @@ test-unit:
 
 sample-fixture:
 	PYTHONPATH=src python3 scripts/validate_sample.py data/sample/events.jsonl
+
+batch-sample:
+	PYTHONPATH=src python3 -m adaptive_recommender.batch.run_sample --input data/sample/events.jsonl --output data/generated
 

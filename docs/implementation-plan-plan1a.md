@@ -1,25 +1,27 @@
 # Plan 1A Implementation Plan
 
-**Status:** G1 contracts and fixture implemented; implementation in progress
+**Status:** G1 complete; G2 batch sample in progress
 **Scope:** Full Lambda vertical slice on tiny data, then controlled expansion
-**Branch:** `main`
-**Implementation started:** No
+**Branch:** `feature/plan1a-contracts-fixture`
+**Implementation started:** Yes
 
 This document turns the approved plan1a direction into an execution sequence. It is intentionally specific enough that three new students can divide the work and still produce one coherent workflow.
 
 ## 0. Pre-code gate
 
-Do not start implementation until these items are resolved:
+The local development gate is partly complete; remaining environment setup happens as each runtime is needed:
 
 1. **Worktree integrity:** the tracked `Documentation/` directory deletion is intentional. The active project documentation is under `docs/`; do not restore the old directory or silently recreate it.
-2. **Runtime baseline:** record Python, Java, Spark, Docker, Docker Compose, and Node versions in `docs/environment.md`.
-3. **Hardware baseline:** record RAM, CPU, disk, Docker architecture, and whether kind/Minikube can run.
-4. **Dataset access:** record where October and November files will live. Do not download the full dataset before profiling storage needs.
-5. **Deployment decision:** select and verify the cloud/Kubernetes target before local pipeline implementation. Docker Compose remains available for local debugging, but it is not the first deployment milestone.
+2. **Runtime baseline:** recorded in `docs/environment.md`; install Java 17 before running Spark.
+3. **Hardware baseline:** host architecture and available disk were observed. RAM/CPU details could not be read in this environment and should be captured on the machine before sizing claims.
+4. **Dataset access:** the checked-in sample fixture is available. Record the REES46 source and profile results before downloading full data.
+5. **Deployment decision:** run the initial workflow on the owner's computer. A local Kubernetes smoke test can use kind or Minikube after the Docker engine is running. Oracle remains optional; cloud signup does not block local implementation.
 
-The first implementation commit is a scaffold and fixture only. It must not include a full-data run, a frontend, or unmeasured performance claims.
+The first implementation increment is a scaffold and fixture. Do not run full data, build the frontend, or make unmeasured performance claims yet.
 
-Current G1 evidence: `make test-unit` passes 6 tests; `make sample-fixture` reports 4 valid records, 1 invalid record, and 1 duplicate event ID.
+Initial G1 evidence: 6 unit tests passed. The expanded fixture now has 11 rows, including one invalid row and one duplicate ID.
+
+Current G2 preparation: the PySpark 3.5.8 batch runner is implemented. It requires Java 17. The Docker daemon is not required for host-mode Spark.
 
 ## 1. Target outcome
 
@@ -570,10 +572,11 @@ start Compose
 
 ## 8. Acceptance gates
 
-### G0: contract ready
+### G0: local development ready
 
-- Documentation deletion resolved.
-- Runtime and hardware recorded.
+- Documentation root decision recorded; `docs/` is active.
+- Local execution target selected. Java 17 and PySpark must be installed before running the batch command.
+- Capture RAM and CPU details on the host before performance sizing.
 - Event schema and fixture manifest exist.
 - Unit tests pass.
 

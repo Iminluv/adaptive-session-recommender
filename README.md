@@ -11,7 +11,7 @@ Start with:
 
 ## Current state
 
-Implementation has not started. Before coding, resolve the worktree/documentation state, record runtime and hardware baselines, confirm dataset access, and confirm the deployment smoke-test target.
+The event contracts and sample fixture are implemented. The Spark batch sample runner is in progress. Development targets the owner's computer; Oracle is optional for later deployment.
 
 ## Planned workflow
 

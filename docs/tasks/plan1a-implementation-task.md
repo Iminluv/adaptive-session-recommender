@@ -1,8 +1,8 @@
 # Plan1A Implementation Task
 
-Status: G1 contracts and fixture implemented; implementation is in progress.
+Status: G1 complete; G2 batch sample in progress.
 
-Branch: `plan1a-implementation`
+Branch: `feature/plan1a-contracts-fixture`
 
 Parent plan: [implementation-plan-plan1a.md](../implementation-plan-plan1a.md)
 
@@ -18,7 +18,7 @@ live events -> Kafka -> Structured Streaming -> session intent
 recommendation API/UI -> adaptive re-ranking
 ```
 
-The project will use a small reproducible fixture first, then the REES46 e-commerce data when the environment is verified. The cloud/Kubernetes deployment target must be selected and checked before local pipeline implementation. Docker Compose remains useful for local debugging and repeatable tests.
+The project will use a small reproducible fixture first, then the REES46 e-commerce data when the environment is verified. The owner's computer is the initial execution target. Oracle is an optional later deployment target.
 
 ## Scope for the first implementation
 
@@ -50,9 +50,9 @@ Deferred:
 1. Confirm that the deletion of the tracked `Documentation/` files is intentional and that `docs/` is the active documentation root.
 2. Record Python, Java, Spark, Kafka, Cassandra, Docker, and frontend versions.
 3. Record available CPU, memory, disk, and whether kind/Minikube is available.
-4. Select the cloud/Kubernetes target and confirm the accepted deployment evidence with the instructor if necessary.
+4. Prepare a local Kubernetes smoke test after the Docker engine is running; confirm cloud deployment requirements with the instructor if needed.
 
-No pipeline code should be started until G0 is understood.
+G0 decisions are recorded. Install runtime dependencies as needed; cloud signup does not block local work.
 
 ### G1 — Contracts and fixture
 
