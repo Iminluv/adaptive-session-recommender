@@ -15,8 +15,10 @@ from fastapi.responses import JSONResponse
 from adaptive_recommender.common.validation import validate_event
 from adaptive_recommender.serving.repositories import (
     BaseServingRepository,
+    CassandraServingRepository,
     InMemoryServingRepository,
     ParquetServingRepository,
+    resolve_serving_repository,
 )
 from adaptive_recommender.serving.reranker import RecommenderService
 
@@ -50,8 +52,8 @@ def create_app(repository: BaseServingRepository | None = None) -> FastAPI:
     )
 
     data_dir = os.environ.get("DATA_DIR", "data/generated")
-    repo = repository or ParquetServingRepository(data_root=Path(data_dir))
-    recommender = RecommenderService(repository=repo)
+    repo = repository or resolve_serving_repository(data_dir=Path(data_dir))
+    recommender = RecommenderService(repository=repo, adaptive_enabled=True)
     app.state.repo = repo
     app.state.recommender = recommender
 
