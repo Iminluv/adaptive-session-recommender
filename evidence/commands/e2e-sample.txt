@@ -1,10 +1,10 @@
 ================================================================================
 MILESTONE GATE G2 VERIFICATION EVIDENCE
 ================================================================================
-Timestamp: 2026-10-25T06:47:48.787848+00:00
-Execution Duration: 13.11s
+Timestamp: 2026-10-25T09:23:30.108052+00:00
+Execution Duration: 30.28s
 User Tested: user-2
-Session ID: session-e2e-1792910868
+Session ID: session-e2e-1792920210
 
 1. INFRASTRUCTURE & HEALTH
 --------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ Event 1 (view): Product #1002 (electronics.smartphone, apple) -> Sent to ecommer
 Event 2 (cart): Product #1002 (electronics.smartphone, apple) -> Sent to ecommerce.live
 Event 3 (invalid): Product #-99 (corrupted action) -> Routed to ecommerce.dlq
 Pipeline Manifest:
-  - Run ID: 20261025T064749195091Z
+  - Run ID: 20261025T092330851083Z
   - Intents Written to Cassandra: 8
   - DLQ Events Handled: 3
   - Watermark: 10 minutes

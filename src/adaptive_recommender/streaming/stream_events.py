@@ -35,6 +35,25 @@ def run_stream_pipeline(
     started_clock = time.monotonic()
     run_id = started_at.strftime("%Y%m%dT%H%M%S%fZ")
 
+    # Ensure subscribed topics exist before starting Spark stream
+    try:
+        from kafka.admin import KafkaAdminClient, NewTopic
+
+        admin = KafkaAdminClient(
+            bootstrap_servers=[s.strip() for s in bootstrap_servers.split(",")],
+            request_timeout_ms=3000,
+        )
+        existing = admin.list_topics()
+        needed = [t.strip() for t in input_topics.split(",") if t.strip()]
+        if dlq_topic:
+            needed.append(dlq_topic.strip())
+        to_create = [NewTopic(name=t, num_partitions=1, replication_factor=1) for t in needed if t not in existing]
+        if to_create:
+            admin.create_topics(new_topics=to_create, validate_only=False)
+        admin.close()
+    except Exception as exc:
+        print(f"Notice: Kafka topic pre-creation: {exc}", file=sys.stderr)
+
     spark = (
         SparkSession.builder.appName("adaptive-recommender-stream-events")
         .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")

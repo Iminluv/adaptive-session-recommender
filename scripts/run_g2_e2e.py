@@ -144,6 +144,23 @@ def verify_dlq_message(bootstrap_servers: str, dlq_topic: str, expected_id: str,
     return None
 
 
+def ensure_kafka_topics(bootstrap_servers: str, topics: list[str]) -> None:
+    try:
+        from kafka.admin import KafkaAdminClient, NewTopic
+
+        admin = KafkaAdminClient(
+            bootstrap_servers=[s.strip() for s in bootstrap_servers.split(",")],
+            request_timeout_ms=3000,
+        )
+        existing = admin.list_topics()
+        to_create = [NewTopic(name=t, num_partitions=1, replication_factor=1) for t in topics if t not in existing]
+        if to_create:
+            admin.create_topics(new_topics=to_create, validate_only=False)
+        admin.close()
+    except Exception as exc:
+        print(f"Notice: Kafka topic pre-creation: {exc}", file=sys.stderr)
+
+
 def run_g2_e2e(
     kafka_bootstrap: str = "localhost:9092",
     cassandra_host: str = "localhost",
@@ -170,6 +187,7 @@ def run_g2_e2e(
     seed_res = seed_cassandra(host=cassandra_host, port=cassandra_port)
     print(f"      Seeded {seed_res['candidates_seeded']} candidates, {seed_res['products_seeded']} products.")
 
+    ensure_kafka_topics(kafka_bootstrap, [topic, dlq_topic, "ecommerce.replay"])
     clear_session_intent(cassandra_host, cassandra_port, target_user, target_session)
 
     # 2. Serving App Initialization

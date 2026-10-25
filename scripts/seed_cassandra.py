@@ -30,13 +30,19 @@ def seed_cassandra(data_dir: Path | str = "data/generated", host: str = "localho
     except Exception as exc:
         raise ConnectionError(f"Could not connect to Cassandra at {host}:{port}: {exc}") from exc
 
-    # Ensure keyspace exists
-    session.execute(
-        """
-        CREATE KEYSPACE IF NOT EXISTS ecommerce
-          WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
-        """
-    )
+    # Ensure keyspace and schema tables exist
+    init_cql_path = Path(__file__).resolve().parent.parent / "deploy" / "cassandra" / "init.cql"
+    if init_cql_path.exists():
+        cql_commands = [cmd.strip() for cmd in init_cql_path.read_text().split(";") if cmd.strip()]
+        for cmd in cql_commands:
+            session.execute(cmd)
+    else:
+        session.execute(
+            """
+            CREATE KEYSPACE IF NOT EXISTS ecommerce
+              WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+            """
+        )
     session.set_keyspace("ecommerce")
 
     # Read data
