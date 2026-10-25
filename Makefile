@@ -3,7 +3,7 @@ JAVA_HOME ?= /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 
 RATE ?= 10
 
-.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra replay-sample stream-sample ui-dev ui-build e2e-sample
+.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra replay-sample stream-sample ui-dev ui-build e2e-sample clean
 
 install:
 	python3 -m venv .venv
@@ -53,4 +53,8 @@ ui-build:
 
 e2e-sample:
 	JAVA_HOME=$(JAVA_HOME) PYTHONPATH=src:. $(PYTHON) scripts/run_g2_e2e.py
+
+clean:
+	rm -rf data/generated/silver data/generated/gold data/generated/manifests data/generated/als_model data/checkpoints
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
