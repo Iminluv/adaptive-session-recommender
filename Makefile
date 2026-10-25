@@ -1,6 +1,6 @@
 PYTHON ?= .venv/bin/python
 
-.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample
+.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra
 
 install:
 	python3 -m venv .venv
@@ -9,6 +9,15 @@ install:
 check:
 	$(PYTHON) --version
 	git diff --check
+
+up:
+	docker compose up -d
+
+down:
+	docker compose down
+
+seed-cassandra:
+	PYTHONPATH=src:. $(PYTHON) scripts/seed_cassandra.py
 
 test-unit:
 	PYTHONPATH=src:. $(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v

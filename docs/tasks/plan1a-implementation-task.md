@@ -2,7 +2,7 @@
 
 Status: G1 complete; G2 batch and serving baseline complete; G3 streaming next.
 
-Branch: `feature/plan1a-contracts-fixture`
+Branch: `feature/streaming-vertical-slice`
 
 Parent plan: [implementation-plan-plan1a.md](../implementation-plan-plan1a.md)
 

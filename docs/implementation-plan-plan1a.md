@@ -2,7 +2,7 @@
 
 **Status:** G1 complete; G2 batch and serving baseline complete; G3 streaming next
 **Scope:** Full Lambda vertical slice on tiny data, then controlled expansion
-**Branch:** `feature/plan1a-contracts-fixture`
+**Branch:** `feature/streaming-vertical-slice`
 **Implementation started:** Yes
 
 This document turns the approved plan1a direction into an execution sequence. It is intentionally specific enough that three new students can divide the work and still produce one coherent workflow.
