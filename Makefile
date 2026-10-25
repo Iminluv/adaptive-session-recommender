@@ -1,4 +1,5 @@
 PYTHON ?= .venv/bin/python
+JAVA_HOME ?= /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 
 RATE ?= 10
 
@@ -25,16 +26,16 @@ replay-sample:
 	PYTHONPATH=src:. $(PYTHON) -m adaptive_recommender.streaming.replay_producer --input data/sample/events.jsonl --rate $(RATE)
 
 stream-sample:
-	JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PYTHONPATH=src:. $(PYTHON) -m adaptive_recommender.streaming.stream_events
+	JAVA_HOME=$(JAVA_HOME) PYTHONPATH=src:. $(PYTHON) -m adaptive_recommender.streaming.stream_events
 
 test-unit:
-	PYTHONPATH=src:. $(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
+	JAVA_HOME=$(JAVA_HOME) PYTHONPATH=src:. $(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
 
 sample-fixture:
 	PYTHONPATH=src $(PYTHON) scripts/validate_sample.py data/sample/events.jsonl
 
 batch-sample:
-	PYTHONPATH=src $(PYTHON) -m adaptive_recommender.batch.run_sample --input data/sample/events.jsonl --output data/generated
+	JAVA_HOME=$(JAVA_HOME) PYTHONPATH=src $(PYTHON) -m adaptive_recommender.batch.run_sample --input data/sample/events.jsonl --output data/generated
 
 api-sample:
 	PYTHONPATH=src:. $(PYTHON) scripts/run_api_sample.py
@@ -51,5 +52,5 @@ ui-build:
 	cd web && npm run build
 
 e2e-sample:
-	JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PYTHONPATH=src:. $(PYTHON) scripts/run_g2_e2e.py
+	JAVA_HOME=$(JAVA_HOME) PYTHONPATH=src:. $(PYTHON) scripts/run_g2_e2e.py
 
