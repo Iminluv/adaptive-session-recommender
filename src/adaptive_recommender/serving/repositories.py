@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +56,16 @@ class BaseServingRepository(ABC):
     def get_session_intents(self, user_id: str, user_session: str | None = None) -> list[SessionIntent]:
         """Fetch real-time session intent scores."""
 
+    def record_session_intent(
+        self,
+        user_id: str,
+        user_session: str,
+        category_code: str,
+        event_type: str,
+    ) -> float:
+        """Record live interaction and return the updated intent score."""
+        return 0.0
+
     @abstractmethod
     def is_healthy(self) -> tuple[bool, str]:
         """Return operational health status and descriptive message."""
@@ -94,6 +106,34 @@ class InMemoryServingRepository(BaseServingRepository):
         if user_session:
             res = [s for s in res if s.user_session == user_session]
         return res
+
+    def record_session_intent(
+        self,
+        user_id: str,
+        user_session: str,
+        category_code: str,
+        event_type: str,
+    ) -> float:
+        weight_map = {"view": 1.0, "cart": 4.0, "remove_from_cart": -3.0, "purchase": 5.0}
+        w = weight_map.get(event_type, 1.0)
+        existing = next(
+            (i for i in self._session_intents if i.user_id == user_id and i.user_session == user_session and i.category_code == category_code),
+            None,
+        )
+        current_raw = getattr(existing, "_raw_score", 0.0) if existing else 0.0
+        new_raw = max(0.0, current_raw + w)
+        new_score = round(2.0 / (1.0 + math.exp(-new_raw / 5.0)) - 1.0, 4) if new_raw > 0 else 0.0
+        if existing:
+            self._session_intents.remove(existing)
+        new_intent = SessionIntent(
+            user_id=user_id,
+            user_session=user_session,
+            category_code=category_code,
+            intent_score=new_score,
+        )
+        object.__setattr__(new_intent, "_raw_score", new_raw)
+        self._session_intents.append(new_intent)
+        return new_score
 
     def is_healthy(self) -> tuple[bool, str]:
         return True, "in-memory repository healthy"
@@ -303,16 +343,17 @@ class CassandraServingRepository(BaseServingRepository):
         if self._session is None:
             return []
         try:
-            if user_session:
+            if user_session and user_session.strip():
                 stmt = self._session.prepare(
                     "SELECT user_id, user_session, category_code, intent_score FROM session_intent WHERE user_id = ? AND user_session = ?"
                 )
-                rows = self._session.execute(stmt, (user_id, user_session))
+                rows = self._session.execute(stmt, (user_id, user_session.strip()))
             else:
-                stmt = self._session.prepare(
+                stmt_user = self._session.prepare(
                     "SELECT user_id, user_session, category_code, intent_score FROM session_intent WHERE user_id = ? ALLOW FILTERING"
                 )
-                rows = self._session.execute(stmt, (user_id,))
+                rows = self._session.execute(stmt_user, (user_id,))
+
             return [
                 SessionIntent(
                     user_id=r.user_id,
@@ -324,6 +365,58 @@ class CassandraServingRepository(BaseServingRepository):
             ]
         except Exception:
             return []
+
+    def record_session_intent(
+        self,
+        user_id: str,
+        user_session: str,
+        category_code: str,
+        event_type: str,
+    ) -> float:
+        if self._session is None:
+            self._connect()
+        if self._session is None:
+            return 0.0
+
+        weight_map = {"view": 1.0, "cart": 4.0, "remove_from_cart": -3.0, "purchase": 5.0}
+        w = weight_map.get(event_type, 1.0)
+
+        current_score = 0.0
+        try:
+            stmt_sel = self._session.prepare(
+                "SELECT intent_score FROM session_intent WHERE user_id = ? AND user_session = ? AND category_code = ?"
+            )
+            row = self._session.execute(stmt_sel, (user_id, user_session, category_code)).one()
+            if row and row.intent_score is not None:
+                current_score = float(row.intent_score)
+        except Exception:
+            pass
+
+        if 0.0 < current_score < 0.999:
+            try:
+                current_raw = -5.0 * math.log(2.0 / (1.0 + current_score) - 1.0)
+            except Exception:
+                current_raw = current_score * 5.0
+        else:
+            current_raw = 0.0
+
+        new_raw = max(0.0, current_raw + w)
+        new_score = round(2.0 / (1.0 + math.exp(-new_raw / 5.0)) - 1.0, 4) if new_raw > 0 else 0.0
+
+        now = datetime.now(timezone.utc)
+        try:
+            stmt_ins = self._session.prepare(
+                """
+                INSERT INTO session_intent (user_id, user_session, category_code, intent_score, last_event_time, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """
+            )
+            self._session.execute(stmt_ins, (user_id, user_session, category_code, new_score, now, now))
+        except Exception as exc:
+            import sys
+            print(f"Warning: Failed to persist session intent to Cassandra: {exc}", file=sys.stderr)
+
+        return new_score
 
     def is_healthy(self) -> tuple[bool, str]:
         if self._session is None:

@@ -1,10 +1,10 @@
 ================================================================================
 MILESTONE GATE G2 VERIFICATION EVIDENCE
 ================================================================================
-Timestamp: 2026-10-25T06:15:41.039474+00:00
-Execution Duration: 12.47s
+Timestamp: 2026-10-25T06:47:48.787848+00:00
+Execution Duration: 13.11s
 User Tested: user-2
-Session ID: session-e2e-1792908941
+Session ID: session-e2e-1792910868
 
 1. INFRASTRUCTURE & HEALTH
 --------------------------------------------------------------------------------
@@ -23,17 +23,17 @@ Event 1 (view): Product #1002 (electronics.smartphone, apple) -> Sent to ecommer
 Event 2 (cart): Product #1002 (electronics.smartphone, apple) -> Sent to ecommerce.live
 Event 3 (invalid): Product #-99 (corrupted action) -> Routed to ecommerce.dlq
 Pipeline Manifest:
-  - Run ID: 20261025T061541338156Z
-  - Intents Written to Cassandra: 7
-  - DLQ Events Handled: 2
+  - Run ID: 20261025T064749195091Z
+  - Intents Written to Cassandra: 8
+  - DLQ Events Handled: 3
   - Watermark: 10 minutes
 
 4. ADAPTIVE RECOMMENDATIONS (Post-streaming, Re-ranked)
 --------------------------------------------------------------------------------
-Rank 1: Product #1002 | Brand: demo | Cat: electronics.smartphone | Score: 0.7748 | Reason: adaptive_session_intent
+Rank 1: Product #1002 | Brand: demo | Cat: electronics.smartphone | Score: 0.8092 | Reason: adaptive_session_intent
   Score Components: ALS=0.9321, Intent=0.4621, Pop=1.0000
-Rank 2: Product #1003 | Brand: demo | Cat: electronics.audio | Score: 0.6462 | Reason: long_term_preference
-  Score Components: ALS=0.9659, Intent=0.0000, Pop=0.6667
+Rank 2: Product #1001 | Brand: demo | Cat: electronics.smartphone | Score: 0.4374 | Reason: adaptive_session_intent
+  Score Components: ALS=0.0693, Intent=0.4621, Pop=1.0000
 
 5. VERIFICATION VERDICTS
 --------------------------------------------------------------------------------

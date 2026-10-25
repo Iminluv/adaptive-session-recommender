@@ -205,6 +205,18 @@ def create_app(
 
         assert event is not None
 
+        # Update live session intent in serving state immediately
+        if event.user_id and event.user_session and event.category_code:
+            try:
+                app.state.repo.record_session_intent(
+                    user_id=event.user_id,
+                    user_session=event.user_session,
+                    category_code=event.category_code,
+                    event_type=event.event_type,
+                )
+            except Exception:
+                pass
+
         if getattr(app.state, "producer", None) is not None:
             topic = os.environ.get("KAFKA_TOPIC", "ecommerce.live")
             try:

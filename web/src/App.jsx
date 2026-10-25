@@ -128,10 +128,8 @@ export default function App() {
       ...prev.slice(0, 19),
     ]);
 
-    // Re-fetch recommendations to reflect immediate updates
-    setTimeout(() => {
-      fetchRecommendations(userId, sessionId);
-    }, 400);
+    // Immediately re-fetch recommendations to reflect live session intent
+    await fetchRecommendations(userId, sessionId);
   };
 
   // Quick simulation helper
@@ -144,6 +142,7 @@ export default function App() {
       await emitEvent('view', target);
     }
     await emitEvent('cart', target);
+    await fetchRecommendations(userId, sessionId);
   };
 
   const getReasonClass = (reason) => {
