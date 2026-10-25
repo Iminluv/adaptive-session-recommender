@@ -2,7 +2,7 @@ PYTHON ?= .venv/bin/python
 
 RATE ?= 10
 
-.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra replay-sample stream-sample ui-dev ui-build
+.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample up down seed-cassandra replay-sample stream-sample ui-dev ui-build e2e-sample
 
 install:
 	python3 -m venv .venv
@@ -49,4 +49,7 @@ ui-dev:
 
 ui-build:
 	cd web && npm run build
+
+e2e-sample:
+	JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home PYTHONPATH=src:. $(PYTHON) scripts/run_g2_e2e.py
 

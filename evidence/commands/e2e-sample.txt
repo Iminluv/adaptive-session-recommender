@@ -1,0 +1,46 @@
+================================================================================
+MILESTONE GATE G2 VERIFICATION EVIDENCE
+================================================================================
+Timestamp: 2026-10-25T06:15:41.039474+00:00
+Execution Duration: 12.47s
+User Tested: user-2
+Session ID: session-e2e-1792908941
+
+1. INFRASTRUCTURE & HEALTH
+--------------------------------------------------------------------------------
+Cassandra: localhost:9042 (Status: Healthy, Keyspace: ecommerce)
+Kafka: localhost:9092 (Status: Healthy)
+API Serving: FastAPI (Status: Healthy)
+
+2. BASELINE RECOMMENDATIONS (Pre-streaming, ALS Candidates Only)
+--------------------------------------------------------------------------------
+Rank 1: Product #1003 | Brand: demo | Cat: electronics.audio | Score: 0.9659 | Reason: long_term_preference
+Rank 2: Product #1002 | Brand: demo | Cat: electronics.smartphone | Score: 0.9321 | Reason: long_term_preference
+
+3. STREAMING CLICKSTREAM INGESTION
+--------------------------------------------------------------------------------
+Event 1 (view): Product #1002 (electronics.smartphone, apple) -> Sent to ecommerce.live
+Event 2 (cart): Product #1002 (electronics.smartphone, apple) -> Sent to ecommerce.live
+Event 3 (invalid): Product #-99 (corrupted action) -> Routed to ecommerce.dlq
+Pipeline Manifest:
+  - Run ID: 20261025T061541338156Z
+  - Intents Written to Cassandra: 7
+  - DLQ Events Handled: 2
+  - Watermark: 10 minutes
+
+4. ADAPTIVE RECOMMENDATIONS (Post-streaming, Re-ranked)
+--------------------------------------------------------------------------------
+Rank 1: Product #1002 | Brand: demo | Cat: electronics.smartphone | Score: 0.7748 | Reason: adaptive_session_intent
+  Score Components: ALS=0.9321, Intent=0.4621, Pop=1.0000
+Rank 2: Product #1003 | Brand: demo | Cat: electronics.audio | Score: 0.6462 | Reason: long_term_preference
+  Score Components: ALS=0.9659, Intent=0.0000, Pop=0.6667
+
+5. VERIFICATION VERDICTS
+--------------------------------------------------------------------------------
+[PASSED] Real-time session intent successfully elevated Product #1002 to Rank 1 over ALS baseline
+[PASSED] Re-ranking reason correctly assigned to 'adaptive_session_intent'
+[PASSED] Cold-start fallback active for anonymous users (fallback=True)
+[PASSED] Dead-Letter Queue (DLQ) correctly isolated invalid events
+================================================================================
+VERDICT: GATE G2 VERTICAL SLICE PASSED
+================================================================================
