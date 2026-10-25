@@ -1,6 +1,6 @@
 # Plan1A Implementation Task
 
-Status: G1 complete; G2 batch sample in progress.
+Status: G1 complete; G2 batch and serving baseline complete; G3 streaming next.
 
 Branch: `feature/plan1a-contracts-fixture`
 
@@ -72,7 +72,7 @@ Exit condition: the fixture validates reproducibly and the unit tests pass. Curr
 5. Store candidates and product statistics.
 6. Expose the first recommendation API with known-user, new-user, and anonymous fallbacks.
 
-Exit condition: one command produces candidates and the API returns recommendations from the fixture.
+Exit condition: one command produces candidates and the API returns recommendations from the fixture. Current result: `make batch-sample` generates Silver Parquet and Gold ALS candidates; `make api-sample` passes with known-user ALS candidates, unknown-user popularity fallbacks, and event ingestion probe.
 
 ### G3 — Streaming and adaptive behavior
 

@@ -1,6 +1,6 @@
 # Plan 1A Implementation Plan
 
-**Status:** G1 complete; G2 batch sample in progress
+**Status:** G1 complete; G2 batch and serving baseline complete; G3 streaming next
 **Scope:** Full Lambda vertical slice on tiny data, then controlled expansion
 **Branch:** `feature/plan1a-contracts-fixture`
 **Implementation started:** Yes

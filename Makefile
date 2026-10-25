@@ -1,15 +1,29 @@
-.PHONY: check test-unit sample-fixture batch-sample
+PYTHON ?= .venv/bin/python
+
+.PHONY: install check test-unit sample-fixture batch-sample api-sample api-run sample
+
+install:
+	python3 -m venv .venv
+	.venv/bin/python -m pip install -e .
 
 check:
-	python3 --version
+	$(PYTHON) --version
 	git diff --check
 
 test-unit:
-	PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -v
+	PYTHONPATH=src:. $(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
 
 sample-fixture:
-	PYTHONPATH=src python3 scripts/validate_sample.py data/sample/events.jsonl
+	PYTHONPATH=src $(PYTHON) scripts/validate_sample.py data/sample/events.jsonl
 
 batch-sample:
-	PYTHONPATH=src python3 -m adaptive_recommender.batch.run_sample --input data/sample/events.jsonl --output data/generated
+	PYTHONPATH=src $(PYTHON) -m adaptive_recommender.batch.run_sample --input data/sample/events.jsonl --output data/generated
+
+api-sample:
+	PYTHONPATH=src:. $(PYTHON) scripts/run_api_sample.py
+
+api-run:
+	PYTHONPATH=src:. $(PYTHON) -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+
+sample: sample-fixture batch-sample api-sample
 
