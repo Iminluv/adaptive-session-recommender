@@ -9,6 +9,7 @@ dist/
 node_modules/
 data/raw/
 data/generated/
+data/checkpoints/
 evidence/logs/
 evidence/metrics/
 evidence/screenshots/

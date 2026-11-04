@@ -15,8 +15,10 @@ from fastapi.responses import JSONResponse
 from adaptive_recommender.common.validation import validate_event
 from adaptive_recommender.serving.repositories import (
     BaseServingRepository,
+    CassandraServingRepository,
     InMemoryServingRepository,
     ParquetServingRepository,
+    resolve_serving_repository,
 )
 from adaptive_recommender.serving.reranker import RecommenderService
 
@@ -42,7 +44,10 @@ def create_error_response(
     return JSONResponse(status_code=status_code, content=content)
 
 
-def create_app(repository: BaseServingRepository | None = None) -> FastAPI:
+def create_app(
+    repository: BaseServingRepository | None = None,
+    kafka_producer: Any | None = None,
+) -> FastAPI:
     app = FastAPI(
         title="Adaptive Session-Aware Recommender API",
         version="0.1.0",
@@ -50,10 +55,29 @@ def create_app(repository: BaseServingRepository | None = None) -> FastAPI:
     )
 
     data_dir = os.environ.get("DATA_DIR", "data/generated")
-    repo = repository or ParquetServingRepository(data_root=Path(data_dir))
-    recommender = RecommenderService(repository=repo)
+    repo = repository or resolve_serving_repository(data_dir=Path(data_dir))
+    recommender = RecommenderService(repository=repo, adaptive_enabled=True)
     app.state.repo = repo
     app.state.recommender = recommender
+
+    producer = kafka_producer
+    kafka_bootstrap = os.environ.get("KAFKA_BOOTSTRAP_SERVERS")
+    if producer is None and kafka_bootstrap:
+        try:
+            import json
+            from kafka import KafkaProducer
+
+            producer = KafkaProducer(
+                bootstrap_servers=[s.strip() for s in kafka_bootstrap.split(",")],
+                key_serializer=lambda k: k.encode("utf-8") if k else None,
+                value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+                acks="all",
+                retries=2,
+                request_timeout_ms=2000,
+            )
+        except Exception:
+            producer = None
+    app.state.producer = producer
 
     @app.exception_handler(RequestValidationError)
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -180,6 +204,28 @@ def create_app(repository: BaseServingRepository | None = None) -> FastAPI:
             )
 
         assert event is not None
+
+        # Update live session intent in serving state immediately
+        if event.user_id and event.user_session and event.category_code:
+            try:
+                app.state.repo.record_session_intent(
+                    user_id=event.user_id,
+                    user_session=event.user_session,
+                    category_code=event.category_code,
+                    event_type=event.event_type,
+                )
+            except Exception:
+                pass
+
+        if getattr(app.state, "producer", None) is not None:
+            topic = os.environ.get("KAFKA_TOPIC", "ecommerce.live")
+            try:
+                key = str(payload.get("user_id") or payload.get("product_id") or "")
+                app.state.producer.send(topic, key=key, value=payload)
+                app.state.producer.flush()
+            except Exception:
+                pass
+
         return {
             "status": "accepted",
             "event_id": event.event_id,

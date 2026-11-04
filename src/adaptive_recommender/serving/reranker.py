@@ -9,8 +9,8 @@ from .repositories import BaseServingRepository
 
 
 DEFAULT_WEIGHTS = {
-    "als": 0.60,
-    "session_intent": 0.25,
+    "als": 0.35,
+    "session_intent": 0.50,
     "popularity": 0.10,
     "brand": 0.05,
 }
@@ -61,11 +61,12 @@ class RecommenderService:
             intent_score = intent_map.get(category_code, 0.0) if category_code else 0.0
 
             if self.adaptive_enabled and intent_map:
+                category_boost = 1.0 + (intent_score * 0.5)
                 final_score = (
                     self.weights["als"] * c.als_score
                     + self.weights["session_intent"] * intent_score
                     + self.weights["popularity"] * pop_score
-                )
+                ) * category_boost
                 reason = "adaptive_session_intent" if intent_score > 0 else "long_term_preference"
             else:
                 final_score = c.als_score

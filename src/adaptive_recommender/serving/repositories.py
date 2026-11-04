@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +56,16 @@ class BaseServingRepository(ABC):
     def get_session_intents(self, user_id: str, user_session: str | None = None) -> list[SessionIntent]:
         """Fetch real-time session intent scores."""
 
+    def record_session_intent(
+        self,
+        user_id: str,
+        user_session: str,
+        category_code: str,
+        event_type: str,
+    ) -> float:
+        """Record live interaction and return the updated intent score."""
+        return 0.0
+
     @abstractmethod
     def is_healthy(self) -> tuple[bool, str]:
         """Return operational health status and descriptive message."""
@@ -94,6 +106,34 @@ class InMemoryServingRepository(BaseServingRepository):
         if user_session:
             res = [s for s in res if s.user_session == user_session]
         return res
+
+    def record_session_intent(
+        self,
+        user_id: str,
+        user_session: str,
+        category_code: str,
+        event_type: str,
+    ) -> float:
+        weight_map = {"view": 1.0, "cart": 4.0, "remove_from_cart": -3.0, "purchase": 5.0}
+        w = weight_map.get(event_type, 1.0)
+        existing = next(
+            (i for i in self._session_intents if i.user_id == user_id and i.user_session == user_session and i.category_code == category_code),
+            None,
+        )
+        current_raw = getattr(existing, "_raw_score", 0.0) if existing else 0.0
+        new_raw = max(0.0, current_raw + w)
+        new_score = round(2.0 / (1.0 + math.exp(-new_raw / 5.0)) - 1.0, 4) if new_raw > 0 else 0.0
+        if existing:
+            self._session_intents.remove(existing)
+        new_intent = SessionIntent(
+            user_id=user_id,
+            user_session=user_session,
+            category_code=category_code,
+            intent_score=new_score,
+        )
+        object.__setattr__(new_intent, "_raw_score", new_raw)
+        self._session_intents.append(new_intent)
+        return new_score
 
     def is_healthy(self) -> tuple[bool, str]:
         return True, "in-memory repository healthy"
@@ -197,3 +237,214 @@ class ParquetServingRepository(BaseServingRepository):
         if self._products_cache is None or self._candidates_cache is None:
             return False, "Failed to parse Parquet gold data"
         return True, f"Parquet storage ready ({len(self._candidates_cache)} users, {len(self._products_cache)} products)"
+
+
+class CassandraServingRepository(BaseServingRepository):
+    """Cassandra-backed repository for live candidate retrieval and real-time session intent."""
+
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 9042,
+        keyspace: str = "ecommerce",
+    ) -> None:
+        self.host = host
+        self.port = port
+        self.keyspace = keyspace
+        self._cluster = None
+        self._session = None
+        self._connect()
+
+    def _connect(self) -> None:
+        try:
+            from cassandra.cluster import Cluster
+
+            self._cluster = Cluster([self.host], port=self.port, connect_timeout=3.0)
+            self._session = self._cluster.connect(self.keyspace)
+        except Exception:
+            self._cluster = None
+            self._session = None
+
+    def get_candidates(self, user_id: str, limit: int = 50) -> list[Candidate]:
+        if self._session is None:
+            self._connect()
+        if self._session is None:
+            return []
+        try:
+            stmt = self._session.prepare(
+                "SELECT user_id, rank, product_id, als_score FROM recommendation_candidates WHERE user_id = ? LIMIT ?"
+            )
+            rows = self._session.execute(stmt, (user_id, limit))
+            return [
+                Candidate(
+                    user_id=r.user_id,
+                    rank=r.rank,
+                    product_id=r.product_id,
+                    als_score=r.als_score,
+                )
+                for r in rows
+            ]
+        except Exception:
+            return []
+
+    def get_products(self, limit: int = 20) -> list[ProductStat]:
+        if self._session is None:
+            self._connect()
+        if self._session is None:
+            return []
+        try:
+            rows = self._session.execute(
+                "SELECT product_id, category_code, brand, event_count, unique_users, average_price, popularity_score FROM product_stats LIMIT 200"
+            )
+            prods = [
+                ProductStat(
+                    product_id=r.product_id,
+                    category_code=r.category_code,
+                    brand=r.brand,
+                    event_count=r.event_count or 0,
+                    unique_users=r.unique_users or 0,
+                    average_price=r.average_price,
+                    popularity_score=r.popularity_score or 0.0,
+                )
+                for r in rows
+            ]
+            prods.sort(key=lambda p: (-p.popularity_score, -p.event_count, p.product_id))
+            return prods[:limit]
+        except Exception:
+            return []
+
+    def get_product(self, product_id: int) -> ProductStat | None:
+        if self._session is None:
+            self._connect()
+        if self._session is None:
+            return None
+        try:
+            stmt = self._session.prepare(
+                "SELECT product_id, category_code, brand, event_count, unique_users, average_price, popularity_score FROM product_stats WHERE product_id = ?"
+            )
+            row = self._session.execute(stmt, (product_id,)).one()
+            if not row:
+                return None
+            return ProductStat(
+                product_id=row.product_id,
+                category_code=row.category_code,
+                brand=row.brand,
+                event_count=row.event_count or 0,
+                unique_users=row.unique_users or 0,
+                average_price=row.average_price,
+                popularity_score=row.popularity_score or 0.0,
+            )
+        except Exception:
+            return None
+
+    def get_session_intents(self, user_id: str, user_session: str | None = None) -> list[SessionIntent]:
+        if self._session is None:
+            self._connect()
+        if self._session is None:
+            return []
+        try:
+            if user_session and user_session.strip():
+                stmt = self._session.prepare(
+                    "SELECT user_id, user_session, category_code, intent_score FROM session_intent WHERE user_id = ? AND user_session = ?"
+                )
+                rows = self._session.execute(stmt, (user_id, user_session.strip()))
+            else:
+                stmt_user = self._session.prepare(
+                    "SELECT user_id, user_session, category_code, intent_score FROM session_intent WHERE user_id = ? ALLOW FILTERING"
+                )
+                rows = self._session.execute(stmt_user, (user_id,))
+
+            return [
+                SessionIntent(
+                    user_id=r.user_id,
+                    user_session=r.user_session,
+                    category_code=r.category_code,
+                    intent_score=r.intent_score,
+                )
+                for r in rows
+            ]
+        except Exception:
+            return []
+
+    def record_session_intent(
+        self,
+        user_id: str,
+        user_session: str,
+        category_code: str,
+        event_type: str,
+    ) -> float:
+        if self._session is None:
+            self._connect()
+        if self._session is None:
+            return 0.0
+
+        weight_map = {"view": 1.0, "cart": 4.0, "remove_from_cart": -3.0, "purchase": 5.0}
+        w = weight_map.get(event_type, 1.0)
+
+        current_score = 0.0
+        try:
+            stmt_sel = self._session.prepare(
+                "SELECT intent_score FROM session_intent WHERE user_id = ? AND user_session = ? AND category_code = ?"
+            )
+            row = self._session.execute(stmt_sel, (user_id, user_session, category_code)).one()
+            if row and row.intent_score is not None:
+                current_score = float(row.intent_score)
+        except Exception:
+            pass
+
+        if 0.0 < current_score < 0.999:
+            try:
+                current_raw = -5.0 * math.log(2.0 / (1.0 + current_score) - 1.0)
+            except Exception:
+                current_raw = current_score * 5.0
+        else:
+            current_raw = 0.0
+
+        new_raw = max(0.0, current_raw + w)
+        new_score = round(2.0 / (1.0 + math.exp(-new_raw / 5.0)) - 1.0, 4) if new_raw > 0 else 0.0
+
+        now = datetime.now(timezone.utc)
+        try:
+            stmt_ins = self._session.prepare(
+                """
+                INSERT INTO session_intent (user_id, user_session, category_code, intent_score, last_event_time, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """
+            )
+            self._session.execute(stmt_ins, (user_id, user_session, category_code, new_score, now, now))
+        except Exception as exc:
+            import sys
+            print(f"Warning: Failed to persist session intent to Cassandra: {exc}", file=sys.stderr)
+
+        return new_score
+
+    def is_healthy(self) -> tuple[bool, str]:
+        if self._session is None:
+            self._connect()
+        if self._session is None:
+            return False, f"Cannot connect to Cassandra at {self.host}:{self.port}"
+        try:
+            row = self._session.execute("SELECT release_version FROM system.local;").one()
+            return True, f"Cassandra cluster online (v{row.release_version}, keyspace={self.keyspace})"
+        except Exception as exc:
+            return False, f"Cassandra query error: {exc}"
+
+
+def resolve_serving_repository(
+    storage_type: str | None = None,
+    data_dir: Path | str = "data/generated",
+    cassandra_host: str = "localhost",
+    cassandra_port: int = 9042,
+) -> BaseServingRepository:
+    """Resolve active repository. Prefers Cassandra when healthy; falls back to Parquet."""
+    if storage_type != "parquet":
+        try:
+            cassandra_repo = CassandraServingRepository(host=cassandra_host, port=cassandra_port)
+            healthy, _ = cassandra_repo.is_healthy()
+            if healthy:
+                return cassandra_repo
+        except Exception:
+            pass
+
+    return ParquetServingRepository(data_root=data_dir)
+
