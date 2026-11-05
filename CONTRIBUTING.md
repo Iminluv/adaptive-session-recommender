@@ -71,6 +71,10 @@ Branch rules:
 - Keep one coherent task per branch.
 - Keep branches short-lived and update them from `main` before review.
 - Do not reuse a merged branch.
+- **Milestone & Gate Branch Isolation (Mandatory):** Never develop new milestone tasks, evaluations, or benchmarks directly on a completed or active milestone gate branch (e.g. developing Week 3 batch evaluation on `feature/streaming-vertical-slice` used for Gate G2). Milestone verification branches must remain frozen and reproducible to preserve acceptance evidence.
+- **Dedicated Task Branches per Milestone:** Each new milestone task must branch off from the base branch (`main` if the prior milestone is merged, or the approved milestone branch) using `<type>/w<week>-<member>-<short-description>` (e.g. `feature/w3-member1-batch-eval`).
+- **No Shared Milestone Branch Overloading:** Never mix concurrent tasks across different members on one unmerged vertical-slice branch. Each teammate must work on their own isolated task branch to prevent overwriting `Makefile` targets, configurations, and test outputs.
+- **Review Gate Requirement:** Reviewers evaluating implementation plans or PRs must verify the designated branch against this rule; proposing to develop on a prior milestone branch is an automatic review blocker.
 - Never force-push a shared branch. Use `--force-with-lease` only on a personal branch after checking nobody else uses it.
 - Do not commit raw datasets, credentials, local database files, build output, or generated benchmark results unless explicitly required.
 

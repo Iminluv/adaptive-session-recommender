@@ -84,6 +84,7 @@ All three members jointly own interface reviews, integration gates, benchmark in
 4. Merge only after a local sample test and a second-member review.
 5. Keep a daily `decision-log.md` entry for changed assumptions, failed experiments, and evidence.
 6. Do not fabricate benchmark numbers. If a run is unavailable, report the limitation and the reason.
+7. Milestone and task branch isolation: Never develop a new week/milestone task directly on an existing or completed milestone gate branch (e.g. do not develop Week 3 batch evaluation on `feature/streaming-vertical-slice` used for Gate G2). Branch off a dedicated task branch (`feature/w<week>-<member>-<task>`) to protect acceptance evidence and prevent team merge collisions. Plan reviews must strictly enforce this rule.
 
 ## Four-week schedule
 
