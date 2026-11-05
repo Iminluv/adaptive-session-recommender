@@ -1,7 +1,7 @@
 <!-- /autoplan restore point: "/Users/iminluv/Vscode/Bigdata/.gstack/tmp/autoplan/feature-streaming-vertical-slice-autoplan-restore-20261104-225230.md" -->
 # Week 3 Implementation Plan: Member 1
 
-**Status:** Phase 0 environment audit documented; readiness gate blocked pending source CSVs and Java/PySpark setup. Phase 1 has not started. ALS cohort choice remains open before interpreting model metrics.
+**Status:** Phase 0 environment audit documented; readiness gate blocked pending source CSV acquisition. Java 17 and project Python dependencies are present. Phase 1 has not started. ALS cohort choice remains open before interpreting model metrics.
 **Branch:** `feature/w3-member1-batch-eval` (isolated task branch created from `main` or `feature/streaming-vertical-slice`; never develop directly on the G2 gate branch)
 **Owner:** Member 1
 **Review partners:** Member 3 for recommendation evaluation; Member 2 for shared Spark benchmark work. These are the ownership assumptions from the team plan; no work or review from either member is treated as confirmed.
@@ -67,7 +67,7 @@ The present batch reader cannot consume the planned REES46 source without a CSV/
 Do not start the full-data run until these are answered and recorded in `docs/dataset.md` or the decision log:
 
 1. **Local data availability:** The user has not downloaded the files yet. Acquire `2019-Oct.csv` and `2019-Nov.csv` from the [REES46 multi-category behavior dataset](https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store), also listed on [REES46's datasets page](https://rees46.com/en/datasets). Record the exact local paths. Never silently substitute another REES46 dataset.
-2. **Machine capacity:** The user's device is a Mac M4 with 16 GB RAM. Record available free disk, CPU/runtime versions, and Spark execution mode before running. A local check on 2026-11-05 (`java -version`) reported that no Java runtime is installed; `JAVA_HOME` was empty. Install/configure a compatible Java 17 runtime and verify it before any Spark run. The source files are large; 16 GB RAM alone does not establish whether a full run fits.
+2. **Machine capacity:** The user's device is a Mac M4 with 16 GB RAM. A point-in-time check on 2026-11-05 found 88 GiB free. Homebrew OpenJDK 17.0.21.0.2 is installed at `/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`, and `.venv` contains PySpark 3.5.8, PyArrow 18.1.0, and NumPy 1.26.4. The `Makefile` configures `.venv/bin/python` and this JDK path; use those settings for Spark commands. Refresh free disk after download and record CPU/runtime versions and Spark execution mode. The source files are large; 16 GB RAM alone does not establish whether a full run fits.
 3. **Course requirement and scale fallback:** The user approved a bounded-sample-first Week 3 target, increasing sample size only while measured resources remain manageable. The instructor's exact minimum has not been confirmed. Label every bounded run as a sample and do not present it as full-month evidence.
 4. **Sampling method:** Use deterministic user-hash sampling, applying the same hash rule to October and November and retaining every event for each selected user. Start with a 0.1% user-hash feasibility pilot; it is not presumed large or dense enough for meaningful ALS results. Record selected users and event counts by month, interactions per user, interactions per item, user/item coverage, and October/November overlap. Label a pilot ALS run diagnostic until these statistics show adequate overlap; do not present low-coverage ALS metrics as representative. Increase the fraction only after checking observed memory, disk, runtime, and output size. Keep null-user events in separate counts and exclude them from user-ranking metrics. This preserves each sampled user's month-long sequence and October/November membership while a short date slice would discard most temporal coverage. It still requires downloading and scanning both raw CSVs; it reduces downstream materialization/model work, not initial download size or the CSV scan. **Open decision:** whether to train/evaluate ALS on all sampled October-warm users and report sparsity/coverage, or define a separate active-user ALS cohort (e.g. at least five October interactions) while retaining the full hash sample for population and cold-start reporting. Do not restrict the domain to electronics without approval; it would bias the multi-category/adaptation evaluation.
 5. **Instructor requirement:** The user accepts reducing scope if full data is too large, but the instructor's minimum evidence requirement is not confirmed. Label every bounded run as a sample and do not present it as full-month evidence.
@@ -173,19 +173,19 @@ Benchmark execution:
 2. Add `docs/evaluation.md` with the frozen temporal split, relevance rules, observation unit, metrics/denominators, candidate coverage, cold-start findings, and limitations.
 3. Add a batch benchmark section to the source-of-truth project report/evidence index, pointing to raw artifacts and commands.
 4. Add Makefile targets only after selecting stable commands, keeping fixture targets fast and separate from full-data commands.
+5. Record what Member 1 completed, what Member 2/3 need to review, the exact reproduction commands, and any run that could not be completed.
 
 ## Implementation progress log
 
 ### Phase 0 — environment/source audit (2026-11-05)
 
-**Completed:** checked the active branch and preserved unrelated working-tree changes; checked for expected CSV files; checked free disk, OS architecture, default Python, Java, and PySpark availability; created `docs/dataset.md` to record the source and audit.
+**Completed:** checked the active branch and preserved unrelated working-tree changes; checked for expected CSV files; checked free disk and OS architecture; corrected the first-pass default-shell checks by verifying the Homebrew JDK and project `.venv`; confirmed the Makefile runtime paths; created `docs/dataset.md` to record the source and audit.
 
-**Observed:** 88 GiB free at the repository path; Apple Silicon `arm64`; Python 3.11.9; no Java runtime (`JAVA_HOME` empty); PySpark not importable from default Python; neither expected CSV is present under the repository's `data/` directory or root.
+**Observed:** 88 GiB free at the repository path; Apple Silicon `arm64`; system Python is 3.11.9; Homebrew OpenJDK 17.0.21.0.2 is present; `.venv` has PySpark 3.5.8, PyArrow 18.1.0, and NumPy 1.26.4; Makefile points to the project interpreter and JDK; neither expected CSV is present under the repository's `data/` directory or root.
 
-**Gate:** BLOCKED. No source profiling, Spark execution, download, or materialization was possible. Phase 1 has not started. Required to resume Phase 0: acquire both planned CSV files and configure Java 17 plus the project Python dependencies; then refresh free-disk measurement and run the documented profile. The ALS cohort decision is needed before evaluating ALS metrics, but does not block source acquisition/profile work.
+**Gate:** BLOCKED pending the two source CSVs. No source profiling, download, or CSV materialization has occurred. Phase 1 has not started. Required to resume Phase 0: acquire both planned CSV files, refresh free-disk measurement, and run the documented profile using the configured project environment. The ALS cohort decision is needed before evaluating ALS metrics, but does not block source acquisition/profile work.
 
-**Review checkpoint:** prepare the Antigravity prompt for this audit and wait for the user to return its review before starting another phase.
-5. Record what Member 1 completed, what Member 2/3 need to review, the exact reproduction commands, and any run that could not be completed.
+**Review checkpoint:** Antigravity's review of commit `13ce69a` found environment-scope corrections and a misplaced handoff item. Those corrections are recorded in a follow-up Phase 0 commit; wait for the user's next order before Phase 1.
 
 ## Proposed repository changes
 
@@ -235,7 +235,7 @@ The existing task table estimates W3-05 at 7 hours, W3-06 at 5 hours (P1/stretch
 
 ## Decisions and questions before the ALS evaluation run
 
-1. After downloading the CSVs, what are their exact local paths and how much free disk is available? Java 17 is currently not installed and must be configured before Spark execution.
+1. After downloading the CSVs, what are their exact local paths and how much free disk is available? Java 17 and the project Spark dependencies are already present in the configured local environment.
 2. Does the instructor require full-month evaluation/full-data benchmarks, or accept bounded sample evidence? The user approved bounded-sample-first, increasing the sample only when measured resources allow.
 3. What minimum date coverage or sample size does the instructor expect? The working sample is a deterministic 0.1% user-hash feasibility pilot, scaled only after resource checks.
 4. **ALS cohort (user decision needed):** Keep the uniform hash sample for ALS and report its observed sparsity/coverage, increasing the hash fraction if resources permit; or use a separate ALS-trained cohort restricted to users with at least five October interactions while retaining the uniform hash sample for population/cold-start reporting. Do not use an electronics-only restriction without approval because it narrows the multi-category evaluation.
@@ -265,6 +265,7 @@ This plan has not completed the full autoplan review pipeline. The current host 
 | External review: factual discrepancy | Antigravity reported that `tests/` contains zero test files. Current repo inspection finds `tests/unit/test_api.py`, `test_contracts.py`, `test_serving.py`, plus streaming tests. | Treat that claim as incorrect; preserve the plan's accurate statement that tests exist but evaluation/benchmark test suites do not. |
 | External review: workload estimate | The reviewer counts planned Week 1 tasks as 15–20 additional hours and extrapolates 45–50 total hours. The source plan does show those tasks, but the repo has completed the sample batch/ALS path; full-data acquisition/profiling and REES46 CSV support remain incomplete. | Do not report 45–50 as measured remaining work. Preserve the source estimate: W3-05/06/07 total 17 estimated Member 1 hours, plus an unassigned share of W3-08 and remaining full-data prerequisites. |
 | Antigravity adversarial review, Round 2 | Conditional approval with three advisories: small hash samples may be too sparse for meaningful ALS; benchmark SQL/workloads need to be concrete; point-in-time session state should use native Spark cumulative windows. | Keep the 0.1% pilot as a feasibility/profile run and require graph/coverage diagnostics before interpreting ALS metrics; make the ALS cohort choice explicit and ask the user before restricting it. Freeze canonical benchmark workloads using actual REES46 fields and identical join keys/actions. Specify Spark cumulative windows over timestamp buckets so same-time events do not leak into one another. |
+| Antigravity Phase 0 review | The initial audit checked only the default shell and Python, missing the installed Homebrew JDK and configured `.venv`. It also found the Phase 5 handoff item displaced below the Phase 0 log. | Verified OpenJDK 17.0.21.0.2, PySpark 3.5.8, PyArrow 18.1.0, NumPy 1.26.4, and Makefile paths in this checkout. Corrected the environment record and moved the handoff item into Phase 5. The remaining Phase 0 gate depends on source CSV acquisition and running the documented profile/resource checks; Phase 1 remains unstarted. |
 
 ### What already exists
 
@@ -279,4 +280,4 @@ Streaming throughput, Kafka lag, executor scaling, recovery, deployment, UI poli
 
 ### Completion summary
 
-Phase 0's environment/source audit is documented in `docs/dataset.md`; its readiness gate is blocked because the CSVs, Java runtime, and importable PySpark environment are absent. Phase 1 and later phases have not started. The user supplied the device and scale-fallback preference; the ALS cohort choice remains open. Each completed phase will be committed and reviewed before proceeding to the next. Native and outside autoplan review passes are unavailable in this Codex tool session; prior static review is not represented as full autoplan consensus.
+Phase 0's environment/source audit is documented in `docs/dataset.md`; its readiness gate is blocked because the two CSVs are absent. The JDK and project Python dependencies are available and configured through the Makefile. Phase 1 and later phases have not started. The user supplied the device and scale-fallback preference; the ALS cohort choice remains open before evaluation. Each completed phase will be committed and reviewed before proceeding to the next. Native and outside autoplan review passes are unavailable in this Codex tool session; prior static review is not represented as full autoplan consensus.

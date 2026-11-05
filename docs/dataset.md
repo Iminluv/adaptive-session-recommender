@@ -1,7 +1,7 @@
 # REES46 Dataset Acquisition and Profile
 
-**Status:** Phase 0 audit started; blocked before profiling/materialization because the source CSVs and Java runtime are unavailable.
-**Last checked:** 2026-11-05
+**Status:** Phase 0 environment audit complete; source profiling is blocked until the two CSVs are acquired.
+**Last checked:** 2026-11-05 (environment rechecked after Antigravity review)
 
 ## Planned source
 
@@ -19,12 +19,13 @@ Read-only checks performed on 2026-11-05:
 |---|---|
 | Device | User-reported Mac M4, 16 GB RAM; runtime reports Apple Silicon `arm64` |
 | Free disk | 88 GiB at `/Users/iminluv/Vscode/Bigdata` on `/dev/disk3s5` |
-| Python | `python3` 3.11.9 |
-| Java | `java -version` reports no Java runtime; `JAVA_HOME` is empty |
-| PySpark | Not importable from the default `python3` environment (`ModuleNotFoundError`) |
+| Default Python | `python3` 3.11.9; PySpark is not installed in this global interpreter |
+| Project Python | `.venv/bin/python`; PySpark 3.5.8, PyArrow 18.1.0, NumPy 1.26.4 import successfully |
+| Java | Homebrew OpenJDK 17.0.21.0.2 exists at `/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home`; direct `java -version` without `JAVA_HOME` does not locate it |
+| Project runtime configuration | `Makefile` sets `PYTHON ?= .venv/bin/python` and `JAVA_HOME ?= /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home` |
 | CSV presence | Neither expected CSV was found under the repository's `data/` directory or repository root |
 
-The free-space figure is a point-in-time check and must be refreshed after download and before materialization. The project pins PySpark 3.5.8 in `pyproject.toml`; Spark work remains blocked until a compatible Java 17 runtime and project Python dependencies are available.
+The free-space figure is a point-in-time check and must be refreshed after download and before materialization. The project runtime is already present. Use the project virtual environment and the Makefile's `JAVA_HOME` setting (or export that same path in a shell) for Spark commands. The raw CSVs are the remaining Phase 0 profiling prerequisite.
 
 ## Planned bounded sample
 
@@ -38,7 +39,7 @@ Record the Spark version and exact expression in the run manifest. The 0.1% pilo
 
 ## Data profile and processing record
 
-Not yet run. The following remain pending until both source files and the runtime are available:
+Not yet run. The following remain pending until both source files are acquired:
 
 - file headers, bytes, checksums, event-time ranges, and source row counts;
 - explicit UTC timestamp parsing using `yyyy-MM-dd HH:mm:ss z` and parse-failure reconciliation;
